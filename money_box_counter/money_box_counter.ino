@@ -17,9 +17,9 @@
 */
 
 //-------НАСТРОЙКИ---------
-#define coin_amount 5    // число монет, которые нужно распознать
-float coin_value[coin_amount] = {0.5, 1.0, 2.0, 5.0, 10.0};  // стоимость монет
-String currency = "RUB"; // валюта (английские буквы!!!)
+const int coin_amount = 8;    // число монет, которые нужно распознать
+int coin_value[coin_amount] = {1, 2, 5, 10, 20, 50, 100, 200};  // стоимость монет
+String currency = "BYN"; // валюта (английские буквы!!!)
 int stb_time = 10000;    // время бездействия, через которое система уйдёт в сон (миллисекунды)
 //-------НАСТРОЙКИ---------
 
@@ -27,7 +27,7 @@ int coin_signal[coin_amount];    // тут хранится значение с�
 int coin_quantity[coin_amount];  // количество монет
 byte empty_signal;               // храним уровень пустого сигнала
 unsigned long standby_timer, reset_timer; // таймеры
-float summ_money = 0;            // сумма монет в копилке
+int summ_money = 0;            // сумма монет в копилке
 
 //-------БИБЛИОТЕКИ---------
 #include "LowPower.h"
@@ -49,6 +49,10 @@ boolean recogn_flag, sleep_flag = true;   // флажки
 //-------КНОПКИ---------
 int sens_signal, last_sens_signal;
 boolean coin_flag = false;
+
+String getFormattedSum(int sum) {
+  return (sum / 100) + "." + (sum % 100);
+}
 
 void setup() {
   Serial.begin(9600);                   // открыть порт для связи с ПК для отладки
@@ -104,7 +108,7 @@ void setup() {
     }
     while (1) {
       for (byte i = 0; i < coin_amount; i++) {
-        lcd.setCursor(0, 1); lcd.print(coin_value[i]);  // отобразить цену монеты, размер которой калибруется
+        lcd.setCursor(0, 1); lcd.print(getFormattedSum(coin_value[i]));  // отобразить цену монеты, размер которой калибруется
         lcd.setCursor(13, 1); lcd.print(currency);      // отобразить валюту
         last_sens_signal = empty_signal;
         while (1) {
@@ -144,8 +148,8 @@ void loop() {
     delay(500);
     lcd.init();
     lcd.clear();
-    lcd.setCursor(0, 0); lcd.print(L"На яхту");
-    lcd.setCursor(0, 1); lcd.print(summ_money);
+    lcd.setCursor(0, 0); lcd.print(L"На кота");
+    lcd.setCursor(0, 1); lcd.print(getFormattedSum(summ_money));
     lcd.setCursor(13, 1); lcd.print(currency);
     empty_signal = analogRead(IRsens);
     sleep_flag = false;
@@ -166,7 +170,7 @@ void loop() {
         // значение разности полученного сигнала с нашими значениями из памяти
         if (delta < 30) {   // и вот тут если эта разность попадает в диапазон, то считаем монетку распознанной
           summ_money += coin_value[i];  // к сумме тупо прибавляем цену монетки (дада, сумма считается двумя разными способами. При старте системы суммой всех монет, а тут прибавление
-          lcd.setCursor(0, 1); lcd.print(summ_money);
+          lcd.setCursor(0, 1); lcd.print(getFormattedSum(summ_money));
           coin_quantity[i]++;  // для распознанного номера монетки прибавляем количество
           recogn_flag = true;
           break;
@@ -190,7 +194,7 @@ void loop() {
 
         // отобразить на дисплее: сверху цены монет (округлено до целых!!!!), снизу их количество
         for (byte i = 0; i < coin_amount; i++) {
-          lcd.setCursor(i * 3, 0); lcd.print((int)coin_value[i]);
+          lcd.setCursor(i * 3, 0); lcd.print(getFormattedSum(coin_value[i]));
           lcd.setCursor(i * 3, 1); lcd.print(coin_quantity[i]);
         }
       }
@@ -222,4 +226,3 @@ void wake_up() {
   digitalWrite(IRpin, 1);
   standby_timer = millis();  // и обнуляем таймер
 }
-// Спасибо за внимание, ваш Алекс
